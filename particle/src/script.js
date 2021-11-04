@@ -19,19 +19,36 @@ const scene = new THREE.Scene()
  * Textures
  */
 const textureLoader = new THREE.TextureLoader()
+const particleTexture = textureLoader.load('/textures/particles/2.png')
 
 //Particles
 //Geometry
 const particlesGeometry = new THREE.BufferGeometry()
-const count = 500
+const count = 5000
+const positions = new Float32Array(count * 3)// x, y, z 축이므로 3을 곱한다.
+const colors = new Float32Array(count * 3)
 
-const position = new Float32Array(count * 3)
+for(let i = 0; i < count * 3; i++){
+    positions[i] = (Math.random() - 0.5) * 10 // Math.random() - 0.5 는 -0.5 ~ 0.5 사이의 값을 나타낸다
+    colors[i] = Math.random()
+}
+
+particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
 
 //Material
 const particlesMaterial = new THREE.PointsMaterial()
-    particlesMaterial.size = 0.02,
+    particlesMaterial.size = 0.1,
     particlesMaterial.sizeAttenuation = true
     //확대했을 때 particle이 확대해서 보이도록 하는 명령어
+    // particlesMaterial.color = new THREE.Color('#ff88cc')
+    particlesMaterial.transparent = true
+    particlesMaterial.alphaMap = particleTexture
+    // particlesMaterial.alphaTest = 0.001
+    // particlesMaterial.depthTest = false
+    particlesMaterial.depthWrite = false
+    particlesMaterial.blending = THREE.AdditiveBlending
+    particlesMaterial.vertexColors = true
 
 //Points 
 const particles = new THREE.Points(particlesGeometry, particlesMaterial)
@@ -77,6 +94,8 @@ const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 
 camera.position.z = 3
 scene.add(camera)
 
+console.log(camera.position)
+
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
@@ -98,6 +117,16 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
+
+    //Update particles
+    // particles.rotation.y = elapsedTime * 0.2
+    for(let i = 0; i < count; i ++){
+        const i3 = i * 3
+
+        const x = particlesGeometry.attributes.position.array[i3]
+        particlesGeometry.attributes.position.array[i3 + 1] = Math.sin(elapsedTime + x)
+    }
+    particlesGeometry.attributes.position.needsUpdate = true
 
     // Update controls
     controls.update()
